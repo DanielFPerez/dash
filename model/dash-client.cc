@@ -26,10 +26,19 @@
 #include <ns3/inet6-socket-address.h>
 #include "http-header.h"
 #include "dash-client.h"
+//#include "examples/lena-dash-ran-metrics.h"
+//new added 
+//#include <sstream>
+//#include <iomanip>
 
 NS_LOG_COMPONENT_DEFINE ("DashClient");
 
 namespace ns3 {
+
+//new added 
+//AsciiTraceHelper traceHelper;
+//Ptr<OutputStreamWrapper> dashClientStream = traceHelper.CreateFileStream ("dash_client.txt");
+
 
 NS_OBJECT_ENSURE_REGISTERED (DashClient);
 
@@ -327,6 +336,29 @@ DashClient::MessageReceived (Packet message)
 
       CalcNextSegment (prevBitrate, m_bitRate, bufferDelay);
 
+      std::cout << Simulator::Now ().GetMicroSeconds ()
+      //*dashClientStream->GetStream() << Simulator::Now ().GetMicroSeconds ()
+                << "\t" << m_id
+                << "\t" << m_bitRate
+                << "\t" << old
+                << "\t" << (8 * m_segment_bytes / m_segmentFetchTime.GetSeconds ())
+                << "\t" << GetBitRateEstimate ()
+                << "\t" << m_player.m_interruption_time.GetSeconds ()
+                << "\t" << currDt.GetSeconds ()
+                << "\t" << (m_lastDt >= 0 ? (currDt - m_lastDt).GetSeconds () : 0)
+                << "\t" << bufferDelay.GetSeconds () << std::endl;
+      /*
+      std::cout << Simulator::Now ().GetSeconds () 
+                << " Node: " << m_id
+                << " newBitRate: " << m_bitRate << " oldBitRate: " << old
+                << " thputOverLastSeg: " << (8 * m_segment_bytes / m_segmentFetchTime.GetSeconds ())
+                << " estBitRate: " << GetBitRateEstimate ()
+                << " interTime: " << m_player.m_interruption_time.GetSeconds ()
+                << " bufferTime: " << currDt.GetSeconds ()
+                << " deltaBufferTime: " << (m_lastDt >= 0 ? (currDt - m_lastDt).GetSeconds () : 0)
+                << " delayToNxtReq: " << bufferDelay.GetSeconds () << std::endl;
+                */
+
       if (prevBitrate != m_bitRate)
         {
           m_rateChanges++;
@@ -342,13 +374,7 @@ DashClient::MessageReceived (Packet message)
           Simulator::Schedule (bufferDelay, &DashClient::RequestSegment, this);
         }
 
-      std::cout << Simulator::Now ().GetSeconds () << " Node: " << m_id
-                << " newBitRate: " << m_bitRate << " oldBitRate: " << old
-                << " estBitRate: " << GetBitRateEstimate ()
-                << " interTime: " << m_player.m_interruption_time.GetSeconds ()
-                << " T: " << currDt.GetSeconds ()
-                << " dT: " << (m_lastDt >= 0 ? (currDt - m_lastDt).GetSeconds () : 0)
-                << " del: " << bufferDelay.GetSeconds () << std::endl;
+
 
       NS_LOG_INFO ("==== Last frame received. Requesting segment " << m_segmentId);
 
